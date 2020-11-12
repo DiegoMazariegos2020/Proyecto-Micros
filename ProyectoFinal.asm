@@ -31,7 +31,10 @@ D2_100us     RES 1
 D_4          RES 1
 D_4_2	     RES 1
 D_ADC        RES 1
-
+VA_ADC1      RES 1
+VA_ADC2      RES 1
+DELAY        RES 1
+	
 R_VE         CODE     0x0000
     GOTO     SETUP
     I_VE     CODE 0x0004
@@ -242,5 +245,99 @@ LOOP
 	MOVLW   .20
 	MOVWF   D_ADC
 	RETURN
+	
+    START
+	CALL    CONF_IO
+	CALL    CONF_ADC
+	;CALL CONF_PWM
+	
+	BANKSEL VAL_ADC
+	CLRF    VAL_ADC1
+	CLRF    VAL_ADC2
+	
+	MOVLW   .10
+	MOVWF   DELAY
+	
+	GOTO    LOOP
+	
+    LOOP
+	BTFSC   PORTA, RA7
+	GOTO    MOS_VALS_ACTS
+	BCF     PORTC, RC0
+	
+	CLRF    ADRESH
+	CALL    D_INICIO
+	BANKSEL ADCON0
+	MOVLW   B'01011001'
+	MOVWF   ADCON0
+	BSF     ADCON0, GO
+	BTFSC   ADCON0, GO
+	GOTO    $-1
+	
+	MOVF    ADRES, 0
+	MOVWF   VAL_ADC
+	MOVWF   PORTB
+	
+	;--------------------SEPARACIÓN-----------------------------------------
+	
+	CLRF    ADRESH
+	CALL    D_INICIO
+	BANKSEL ADCON0
+	MOVLW   B'01011101'
+	MOVWF   ADCON0
+	BSF     ADCON0, GO
+	BTFSC   ADCON0, GO
+	GOTO    $-1
+	
+	MOVF    ADRESH, 0
+	MOVWF   VAL_ADC2
+	MOVWF   PORTD
+	
+	GOTO    LOOP
+	
+;---------------------------SEPARACIÓN------------------------------------------
+	
+MOS_VALS_ACTS
+	BANKSEL PORTA
+	BTFSC  ´PORTA, RA4
+	GOTO    $-1
+	BSF     PORTC, RC0
+	
+	MOVF    VAL_ADC2, 0
+	MOVWF   PORTD 
+	
+	MOVF    VAL_ADC1, 0
+	MOVWF   PORTB
+	
+	BTFSC   PORTA, RA6
+	GOTO    LOOP
+	GOTO    MOS_VALS_ACTS
+	
+    ;CONF_PWM
+	;BANKSEL T2CON
+	;MOVLW   B'00000111'
+	;MOVWF   T2CON
+	
+	;BANKSEL PR2
+	;MOVLW   .156
+	;MOVWF   PR2
+	
+	;BANKSEL TRISC
+	;MOVLW   B'00000000'
+	;MOVWF   TRISC
+	
+	;CONFI CCP1CON
+	;BANKSEL CCP1CON
+	;BSF     CCP1CON,  3
+	;BSF     CCP1CON,  2
+	;BCF     CCP1CON,  1
+	;BCF     CCP1CON,  0
+	
+	;CONFI CCP2CON
+	;BANKSEL CCP2CON
+	;BSF     CCP2CON, 3
+	;BSF     CCP2CON, 2
+	
+	;RETURN
 	
 	END
