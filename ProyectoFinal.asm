@@ -142,3 +142,105 @@ SETUP
     BSF      INTCON, T0IE
     BCF      INTCON, T0IF
     BSF      INTCON, GIE
+    
+    ;CONFIGURACIÓN ADCON1
+    BANKSEL  ADCON1
+    MOVLW    B'00000000'
+    MOVWF    ADCON1
+    
+    MOVLW    .100
+    MOVWF    D_100us
+    MOVLW    .4
+    MOVWF    D_4
+    
+    GOTO     LOOP
+    
+LOOP
+    ;CONFI ADC
+    ;---------------------------------------------------------------------------
+	CALL     D_INICIO
+	CLRF     ADRESH
+	BANKSEL  ADCON0
+	MOVLW    B'01010001'
+	MOVWF    ADCON0
+	BSF      ADCON0, GO
+	BTFSC    ADCON0, GO
+	GOTO     $-1
+	
+	MOVF    ADRESH, 0
+	MOVWF   ADC_P1
+	BANKSEL STATUS
+	BCF     STATUS,    C
+	RRF     ADC_P1,    1
+	BCF     STATUS,    C
+	RRF     ADC_P1,    1
+	BCF     STATUS,    C
+	RRF     ADC_P1,    1
+;-------------------------------------------------------------------------------
+	CALL    D_INICIO
+	CLRF    ADRESH
+	BANKSEL ADCON0
+	MOVLW   B'01010101'
+	MOVWF   ADCON0
+	BSF     ADCON0, GO
+	BTFSC   ADCON0, GO
+	GOTO    $-1
+	MOVF    ADRESH, 0
+	MOVWF   ADC_P2
+	BANKSEL STATUS
+	BCF     STATUS,    C
+	RRF     ADC_P2,    1
+	BCF     STATUS,    C
+	RRF     ADC_P2,    1
+	BCF     STATUS,    C
+	RRF     ADC_P2,    1
+	
+	GOTO    LOOP
+	
+    CONFIG_IO
+	BANKSEL TRISA
+	CLRF    TRISA
+	COMF    TRISA,     1
+	CLRF    TRISE,    
+	COMF    TRISE,     1
+	CLRF    TRISB
+	MOVLW   B'10001000'
+	MOVWF   TRISC
+	MOVLW   B'00000011'
+	MOVWF   TRISD
+	
+	BANKSEL ANSEL
+	MOVLW   B'11111111'
+	MOVWF   ANSEL
+	CLRF    ANSELH
+	
+	BANKSEL PORTA
+	CLRF    PORTA
+	CLRF    PORTB
+	CLRF    PORTC
+	CLRF    PORTD
+	CLRF    PORTE
+	
+	RETURN
+	
+    CONFIG_TIMER0
+	BANKSEL OPTION_REG
+	BCF     OPTION_REG, T0CS
+	BSF     OPTION_REG, PSA
+	BCF     OPTION_REG, PS2
+	BCF     OPTION_REG, PS1
+	BCF     OPTION_REG, PS0
+	BANKSEL TMR0
+	MOVLW   .206
+	MOVWF   TMR0
+	BCF     INTCON, T0IF
+	RETURN
+	
+    D_INCIO
+	DECFSZ  D_ADC, 1
+	GOTO    $-1
+	MOVLW   .20
+	MOVWF   D_ADC
+	RETURN
+	
+	END
