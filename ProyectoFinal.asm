@@ -24,8 +24,12 @@ W_T          RES 1
 STATUS_T     RES 1
 ADC_1        RES 1
 ADC_2        RES 1
+ADC_3	     RES 1
+ADC_4	     RES 1
 ADC1_H       RES 1
 ADC2_H       RES 1
+D_20ms       RES 1
+D2_20ms      RES 1 
 D_100us      RES 1
 D2_100us     RES 1
 D_4          RES 1
@@ -34,6 +38,8 @@ D_ADC        RES 1
 VA_ADC1      RES 1
 VA_ADC2      RES 1
 DELAY        RES 1
+DU_CY1	     RES 1
+DU_CY2	     RES 1
 	
 R_VE         CODE     0x0000
     GOTO     SETUP
@@ -375,5 +381,154 @@ CONFIG_IO
 	MOVWF    DELAY
 	RETURN
 	
+PUSH:
+    MOVWF        W_T
+    SWAPF        STATUS, W
+    MOVWF        STATUS_T
+ISR:
+    BTFSS        INTCON, T0IF
+    GOTO         POP
+    MOVLW        .10
+    MOVWF        TMR0
+    BCF          INTCON, T0IF
+    GOTO         PWM_1
+    
+BACK1:
+    GOTO         PWM_2
+    GOTO         POP
+    
+BACK2:
+    GOTO         POP
+    
+PWM_1
+    DECFSZ       DU_CY1,    1
+    GOTO         BACK1
+    GOTO         DUTY
+    
+PWM_2
+    DECFSZ       DU_CY2,    1
+    GOTO         BACK2
+    GOTO         DUTY2
+    
+DUTY:
+    BCF          PORTD,  RD2
+    MOVWF        .1
+    MOVWF        DU_CY1
+    DECFSZ       D_20ms,    1
+    GOTO         BACK1
+    GOTO         PWM
+    
+PWM:
+    BSF          PORTD, RD2
+    MOVLW        .200
+    SUBWF        ADC_1,  0
+    BTFSS        STATUS, C
+    GOTO         RA_2
+    MOVLW        .2
+    MOVWF        DU_CY1
+    MOVLW        .38
+    MOVWF        D_20ms
+    GOTO         BACK1
+    
+RA_2:
+    MOVLW        .150
+    SUBWF        ADC_1,  0
+    BTFSS        STATUS, C
+    GOTO         RA_3
+    MOVLW        .3
+    MOVWF        DU_CY1
+    MOVLW        .37
+    MOVWF        D_20ms
+    GOTO         BACK1
+    
+RA_3:
+    MOVLW        .100
+    SUBWF        ADC_1,  0
+    BTFSS        STATUS, C
+    GOTO         RA_4
+    MOVLW        .4
+    MOVWF        DU_CY1
+    MOVLW        .36
+    MOVWF        D_20ms
+    GOTO         BACK1
+    
+RA_4:
+    MOVLW        .50
+    SUBWF        ADC,    0
+    BTFSS        STATUS, C
+    GOTO         RA_5
+    MOVLW        .5
+    MOVWF        DU_CY1
+    MOVLW        .35
+    MOVWF        D_20ms
+    GOTO         BACK1
+    
+RA_5:
+    MOVLW        .6
+    MOVWF        DU_CY1
+    MOVLW        .34
+    MOVWF        D_20ms
+    GOTO         BACK1
+    
+DUTY2:
+    BCF          PORTD, RD3
+    MOVLW        .1
+    MOVWF        DU_CY2
+    DECFSZ       D_20ms,    1
+    GOTO         BACK2
+    GOTO         PWM2
+    
+PWM2:
+    BSF          PORTD,  RD3
+    MOVLW        .200
+    SUBWF        ADC_2,  0
+    BTFSS        STATUS, C
+    GOTO         RA_2_2
+    MOVLW        .6
+    MOVWF        DU_CY2
+    MOVLW        .34
+    MOVWF        D2_20ms
+    GOTO         BACK2
+    
+RA_2_2:
+    MOVLW        .150
+    SUBWF        ADC_2,  0
+    BTFSS        STATUS, C
+    GOTO         RA_3_2
+    MOVLW        .5
+    MOVWF        DU_CY2
+    MOVLW        .35
+    MOVWF        D_20ms
+    GOTO         BACK2
+    
+RA_3_2:
+    MOVLW        .100
+    SUBWF        ADC_2,  0
+    BTFSS        STATUS, C
+    GOTO         RA_4_2
+    MOVLW        .4
+    MOVWF        DU_CY2
+    MOVLW        .36
+    MOVWF        D2_20ms
+    GOTO         BACK2
+    
+RA_4_2:
+    MOVLW        .50
+    SUBWF        ADC_2,  0
+    BTFSS        STATUS, C
+    GOTO         RA_5_2
+    MOVLW        .3
+    MOVWF        DU_CY2
+    MOVLW        .37
+    MOVWF        D2_20ms
+    GOTO         BACK2
+    
+RA_5_2:
+    MOVLW        .2
+    MOVWF        DU_CY2
+    MOVLW        .38
+    MOVWF        D2_20ms
+    
+    
 	
 	END
